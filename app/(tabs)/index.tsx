@@ -12,8 +12,13 @@ interface Meditation {
   id: string;
 }
 
-interface MeditationCount {
-  [key: string]: number;
+interface MeditationRecord {
+  count: number;
+  timestamp: number;
+}
+
+interface MeditationHistory {
+  [key: string]: MeditationRecord[];
 }
 
 const meditations: Meditation[] = [
@@ -24,34 +29,45 @@ const meditations: Meditation[] = [
 ];
 
 export default function HomeScreen() {
-  const [counts, setCounts] = useState<MeditationCount>({});
+  const [history, setHistory] = useState<MeditationHistory>({});
 
   useEffect(() => {
-    loadCounts();
+    loadHistory();
   }, []);
 
-  const loadCounts = async () => {
+  const loadHistory = async () => {
     try {
-      const savedCounts = await AsyncStorage.getItem('meditationCounts');
-      if (savedCounts) {
-        setCounts(JSON.parse(savedCounts));
+      const savedHistory = await AsyncStorage.getItem('meditationHistory');
+      if (savedHistory) {
+        setHistory(JSON.parse(savedHistory));
       }
     } catch (error) {
       console.error('Ошибка при загрузке данных:', error);
     }
   };
 
-  const incrementCount = async (meditationId: string, increment: number) => {
+  const addMeditationRecord = async (meditationId: string, count: number) => {
     try {
-      const newCounts = {
-        ...counts,
-        [meditationId]: (counts[meditationId] || 0) + increment,
+      const newRecord: MeditationRecord = {
+        count,
+        timestamp: Date.now(),
       };
-      setCounts(newCounts);
-      await AsyncStorage.setItem('meditationCounts', JSON.stringify(newCounts));
+
+      const newHistory = {
+        ...history,
+        [meditationId]: [...(history[meditationId] || []), newRecord],
+      };
+
+      console.log('Сохраняемая история:', newHistory);
+      setHistory(newHistory);
+      await AsyncStorage.setItem('meditationHistory', JSON.stringify(newHistory));
     } catch (error) {
       console.error('Ошибка при сохранении данных:', error);
     }
+  };
+
+  const getTotalCount = (meditationId: string) => {
+    return (history[meditationId] || []).reduce((sum, record) => sum + record.count, 0);
   };
 
   return (
@@ -70,21 +86,21 @@ export default function HomeScreen() {
       {meditations.map((meditation) => (
         <ThemedView key={meditation.id} style={styles.meditationContainer}>
           <ThemedText type="subtitle">{meditation.label}</ThemedText>
-          <ThemedText>Текущее количество: {counts[meditation.id] || 0}</ThemedText>
+          <ThemedText>Всего выполнено: {getTotalCount(meditation.id)}</ThemedText>
           <ThemedView style={styles.buttonContainer}>
             <Pressable
               style={styles.button}
-              onPress={() => incrementCount(meditation.id, 27)}>
+              onPress={() => addMeditationRecord(meditation.id, 27)}>
               <ThemedText>+27</ThemedText>
             </Pressable>
             <Pressable
               style={styles.button}
-              onPress={() => incrementCount(meditation.id, 54)}>
+              onPress={() => addMeditationRecord(meditation.id, 54)}>
               <ThemedText>+54</ThemedText>
             </Pressable>
             <Pressable
               style={styles.button}
-              onPress={() => incrementCount(meditation.id, 108)}>
+              onPress={() => addMeditationRecord(meditation.id, 108)}>
               <ThemedText>+108</ThemedText>
             </Pressable>
           </ThemedView>
