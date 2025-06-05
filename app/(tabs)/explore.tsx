@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -61,6 +61,10 @@ export default function HistoryScreen() {
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
+  const getTotalCount = (meditationId: string) => {
+    return (history[meditationId] || []).reduce((sum, record) => sum + record.count, 0);
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
@@ -78,25 +82,32 @@ export default function HistoryScreen() {
 
       {meditations.map((meditation) => (
         <ThemedView key={meditation.id} style={styles.meditationContainer}>
-          <ThemedText type="subtitle">{meditation.label}</ThemedText>
-          <ThemedView style={styles.historyContainer}>
-            {history[meditation.id]?.length > 0 ? (
-              history[meditation.id]
-                .sort((a, b) => b.timestamp - a.timestamp)
-                .map((record, index) => (
-                  <ThemedView key={index} style={styles.recordContainer}>
-                    <ThemedText style={styles.dateText}>
-                      {formatDate(record.timestamp)}
-                    </ThemedText>
-                    <ThemedText style={styles.countText}>
-                      {record.count} повторений
-                    </ThemedText>
-                  </ThemedView>
-                ))
-            ) : (
-              <ThemedText style={styles.emptyText}>Нет записей</ThemedText>
-            )}
+          <ThemedView style={styles.meditationHeader}>
+            <ThemedText type="subtitle">{meditation.label}</ThemedText>
+            <ThemedText style={styles.totalCount}>
+              Всего: {getTotalCount(meditation.id)}
+            </ThemedText>
           </ThemedView>
+          <ScrollView style={styles.historyScrollView}>
+            <ThemedView style={styles.historyContainer}>
+              {history[meditation.id]?.length > 0 ? (
+                history[meditation.id]
+                  .sort((a, b) => b.timestamp - a.timestamp)
+                  .map((record, index) => (
+                    <ThemedView key={index} style={styles.recordContainer}>
+                      <ThemedText style={styles.dateText}>
+                        {formatDate(record.timestamp)}
+                      </ThemedText>
+                      <ThemedText style={styles.countText}>
+                        {record.count} повторений
+                      </ThemedText>
+                    </ThemedView>
+                  ))
+              ) : (
+                <ThemedText style={styles.emptyText}>Нет записей</ThemedText>
+              )}
+            </ThemedView>
+          </ScrollView>
         </ThemedView>
       ))}
     </ParallaxScrollView>
@@ -122,9 +133,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  historyScrollView: {
+    maxHeight: 200,
+  },
   historyContainer: {
     gap: 8,
-    marginTop: 8,
   },
   recordContainer: {
     flexDirection: 'row',
@@ -145,5 +158,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontStyle: 'italic',
     color: 'rgba(255, 255, 255, 0.5)',
+  },
+  meditationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  totalCount: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 }); 
