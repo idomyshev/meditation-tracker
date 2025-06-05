@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -31,10 +32,6 @@ const meditations: Meditation[] = [
 export default function HomeScreen() {
   const [history, setHistory] = useState<MeditationHistory>({});
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
-
   const loadHistory = async () => {
     try {
       const savedHistory = await AsyncStorage.getItem('meditationHistory');
@@ -45,6 +42,12 @@ export default function HomeScreen() {
       console.error('Ошибка при загрузке данных:', error);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadHistory();
+    }, [])
+  );
 
   const addMeditationRecord = async (meditationId: string, count: number) => {
     try {

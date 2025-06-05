@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -42,6 +42,19 @@ export default function HistoryScreen() {
       }
     } catch (error) {
       console.error('Ошибка при загрузке данных:', error);
+    }
+  };
+
+  const deleteRecord = async (meditationId: string, timestamp: number) => {
+    try {
+      const newHistory = {
+        ...history,
+        [meditationId]: history[meditationId].filter(record => record.timestamp !== timestamp)
+      };
+      setHistory(newHistory);
+      await AsyncStorage.setItem('meditationHistory', JSON.stringify(newHistory));
+    } catch (error) {
+      console.error('Ошибка при удалении записи:', error);
     }
   };
 
@@ -95,12 +108,23 @@ export default function HistoryScreen() {
                   .sort((a, b) => b.timestamp - a.timestamp)
                   .map((record, index) => (
                     <ThemedView key={index} style={styles.recordContainer}>
-                      <ThemedText style={styles.dateText}>
-                        {formatDate(record.timestamp)}
-                      </ThemedText>
-                      <ThemedText style={styles.countText}>
-                        {record.count} повторений
-                      </ThemedText>
+                      <ThemedView style={styles.recordInfo}>
+                        <ThemedText style={styles.dateText}>
+                          {formatDate(record.timestamp)}
+                        </ThemedText>
+                        <ThemedText style={styles.countText}>
+                          {record.count} повторений
+                        </ThemedText>
+                      </ThemedView>
+                      <Pressable
+                        style={styles.deleteButton}
+                        onPress={() => deleteRecord(meditation.id, record.timestamp)}>
+                        <IconSymbol
+                          size={20}
+                          name="trash.fill"
+                          color="#FF3B30"
+                        />
+                      </Pressable>
                     </ThemedView>
                   ))
               ) : (
@@ -147,6 +171,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
+  recordInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   dateText: {
     fontSize: 14,
   },
@@ -168,5 +198,9 @@ const styles = StyleSheet.create({
   totalCount: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 8,
   },
 }); 
