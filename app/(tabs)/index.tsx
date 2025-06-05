@@ -1,12 +1,59 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+interface Meditation {
+  label: string;
+  id: string;
+}
+
+interface MeditationCount {
+  [key: string]: number;
+}
+
+const meditations: Meditation[] = [
+  { label: 'Простирания', id: 'prostrations' },
+  { label: 'Алмазный Ум', id: 'diamond-mind' },
+  { label: 'Мандала', id: 'mandala' },
+  { label: 'Гуру Йога', id: 'guru-yoga' },
+];
+
 export default function HomeScreen() {
+  const [counts, setCounts] = useState<MeditationCount>({});
+
+  useEffect(() => {
+    loadCounts();
+  }, []);
+
+  const loadCounts = async () => {
+    try {
+      const savedCounts = await AsyncStorage.getItem('meditationCounts');
+      if (savedCounts) {
+        setCounts(JSON.parse(savedCounts));
+      }
+    } catch (error) {
+      console.error('Ошибка при загрузке данных:', error);
+    }
+  };
+
+  const incrementCount = async (meditationId: string, increment: number) => {
+    try {
+      const newCounts = {
+        ...counts,
+        [meditationId]: (counts[meditationId] || 0) + increment,
+      };
+      setCounts(newCounts);
+      await AsyncStorage.setItem('meditationCounts', JSON.stringify(newCounts));
+    } catch (error) {
+      console.error('Ошибка при сохранении данных:', error);
+    }
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -17,40 +64,32 @@ export default function HomeScreen() {
         />
       }>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+        <ThemedText type="title">Счетчик медитаций!</ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+
+      {meditations.map((meditation) => (
+        <ThemedView key={meditation.id} style={styles.meditationContainer}>
+          <ThemedText type="subtitle">{meditation.label}</ThemedText>
+          <ThemedText>Текущее количество: {counts[meditation.id] || 0}</ThemedText>
+          <ThemedView style={styles.buttonContainer}>
+            <Pressable
+              style={styles.button}
+              onPress={() => incrementCount(meditation.id, 27)}>
+              <ThemedText>+27</ThemedText>
+            </Pressable>
+            <Pressable
+              style={styles.button}
+              onPress={() => incrementCount(meditation.id, 54)}>
+              <ThemedText>+54</ThemedText>
+            </Pressable>
+            <Pressable
+              style={styles.button}
+              onPress={() => incrementCount(meditation.id, 108)}>
+              <ThemedText>+108</ThemedText>
+            </Pressable>
+          </ThemedView>
+        </ThemedView>
+      ))}
     </ParallaxScrollView>
   );
 }
@@ -60,10 +99,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginBottom: 20,
   },
-  stepContainer: {
+  meditationContainer: {
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 20,
+    padding: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  button: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#A1CEDC',
+    alignItems: 'center',
   },
   reactLogo: {
     height: 178,
