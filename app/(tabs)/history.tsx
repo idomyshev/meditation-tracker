@@ -1,21 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { MeditationRecord } from '@/types/types';
 
 interface Meditation {
   label: string;
   id: string;
-}
-
-interface MeditationRecord {
-  count: number;
-  timestamp: number;
 }
 
 interface MeditationHistory {
@@ -45,18 +41,43 @@ export default function HistoryScreen() {
     }
   };
 
-  const deleteRecord = async (meditationId: string, timestamp: number) => {
+  const handleClickDeleteRecord = (meditationId: string, recordId: string) => {
+    const record = history[meditationId].find(record => record.id === recordId);
+    
+    if (!record) {
+      Alert.alert('Ошибка', 'Запись не найдена');
+      return;
+    }
+
+    const meditation = meditations.find(meditation => meditation.id === meditationId);
+    if (!meditation) {
+      Alert.alert('Ошибка', 'Медитация не найдена');
+      return;
+    }
+
+    const recordDate = new Date(record.timestamp);
+    const recordDateString = recordDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    Alert.alert('Удалить запись', `Вы уверены, что хотите удалить ${record.count} повторений медитации ${meditation.label}? `, [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Удалить', onPress: () => deleteRecord(meditationId, recordId) },
+    ]);
+  };
+
+  const deleteRecord = async (meditationId: string, recordId: string) => {
     try {
       const newHistory = {
         ...history,
-        [meditationId]: history[meditationId].filter(record => record.timestamp !== timestamp)
+        [meditationId]: history[meditationId].filter(record => record.id !== recordId)
       };
       setHistory(newHistory);
       await AsyncStorage.setItem('meditationHistory', JSON.stringify(newHistory));
+      Alert.alert('Успешно', 'Запись удалена');
     } catch (error) {
       console.error('Ошибка при удалении записи:', error);
     }
   };
+
+
 
   useFocusEffect(
     useCallback(() => {
@@ -118,7 +139,7 @@ export default function HistoryScreen() {
                       </ThemedView>
                       <Pressable
                         style={styles.deleteButton}
-                        onPress={() => deleteRecord(meditation.id, record.timestamp)}>
+                        onPress={() => handleClickDeleteRecord(meditation.id, record.id)}>
                         <IconSymbol
                           size={20}
                           name="trash.fill"

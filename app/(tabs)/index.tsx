@@ -7,27 +7,11 @@ import { Pressable, StyleSheet } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { generateUUID } from '@/helpers/uuid';
+import { meditations } from '@/settings/settings';
+import { MeditationHistory, MeditationRecord } from '@/types/types';
 
-interface Meditation {
-  label: string;
-  id: string;
-}
 
-interface MeditationRecord {
-  count: number;
-  timestamp: number;
-}
-
-interface MeditationHistory {
-  [key: string]: MeditationRecord[];
-}
-
-const meditations: Meditation[] = [
-  { label: 'Простирания', id: 'prostrations' },
-  { label: 'Алмазный Ум', id: 'diamond-mind' },
-  { label: 'Мандала', id: 'mandala' },
-  { label: 'Гуру Йога', id: 'guru-yoga' },
-];
 
 export default function HomeScreen() {
   const [history, setHistory] = useState<MeditationHistory>({});
@@ -52,6 +36,7 @@ export default function HomeScreen() {
   const addMeditationRecord = async (meditationId: string, count: number) => {
     try {
       const newRecord: MeditationRecord = {
+        id: generateUUID(),
         count,
         timestamp: Date.now(),
       };
