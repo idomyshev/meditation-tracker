@@ -7,6 +7,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { getTotalCount } from '@/helpers/helpers';
 import { generateUUID } from '@/helpers/uuid';
 import { meditations } from '@/settings/settings';
 import { MeditationHistory, MeditationRecord } from '@/types/types';
@@ -54,10 +55,6 @@ export default function HomeScreen() {
     }
   };
 
-  const getTotalCount = (meditationId: string) => {
-    return (history[meditationId] || []).reduce((sum, record) => sum + record.count, 0);
-  };
-
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -74,7 +71,7 @@ export default function HomeScreen() {
       {meditations.map((meditation) => (
         <ThemedView key={meditation.id} style={styles.meditationContainer}>
           <ThemedText type="subtitle">{meditation.label}</ThemedText>
-          <ThemedText>Всего выполнено: {getTotalCount(meditation.id)}</ThemedText>
+          <ThemedText>Всего выполнено: {getTotalCount(history, meditation.id)}</ThemedText>
           <ThemedView style={styles.buttonContainer}>
             <Pressable
               style={styles.button}

@@ -1,13 +1,17 @@
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
 
+
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { getTotalCount } from '@/helpers/helpers';
 import { MeditationRecord } from '@/types/types';
+
 
 interface Meditation {
   label: string;
@@ -55,27 +59,73 @@ export default function HistoryScreen() {
       return;
     }
 
-    const recordDate = new Date(record.timestamp);
-    const recordDateString = recordDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
     Alert.alert('Удалить запись', `Вы уверены, что хотите удалить ${record.count} повторений медитации ${meditation.label}? `, [
       { text: 'Отмена', style: 'cancel' },
       { text: 'Удалить', onPress: () => deleteRecord(meditationId, recordId) },
     ]);
   };
 
-  const deleteRecord = async (meditationId: string, recordId: string) => {
-    try {
-      const newHistory = {
-        ...history,
-        [meditationId]: history[meditationId].filter(record => record.id !== recordId)
-      };
-      setHistory(newHistory);
-      await AsyncStorage.setItem('meditationHistory', JSON.stringify(newHistory));
-      Alert.alert('Успешно', 'Запись удалена');
-    } catch (error) {
-      console.error('Ошибка при удалении записи:', error);
-    }
-  };
+const deleteRecord = async (meditationId: string, recordId: string) => {
+  try {
+    const newHistory = {
+      ...history,
+      [meditationId]: history[meditationId].map(record => 
+        record.id === recordId 
+          ? { ...record, deleted: true }
+          : record
+      )
+    };
+    setHistory(newHistory);
+    await AsyncStorage.setItem('meditationHistory', JSON.stringify(newHistory));
+    Alert.alert('Успешно', 'Запись помечена, как удаленная');
+  } catch (error) {
+    console.error('Ошибка при удалении записи:', error);
+    Alert.alert('Ошибка', 'Не удалось удалить запись');
+  }
+};
+  
+  const handleClickRestoreRecord = (meditationId: string, recordId: string) => {
+  const record = history[meditationId].find(record => record.id === recordId);
+  
+  if (!record) {
+    Alert.alert('Ошибка', 'Запись не найдена');
+    return;
+  }
+
+  const meditation = meditations.find(meditation => meditation.id === meditationId);
+  if (!meditation) {
+    Alert.alert('Ошибка', 'Медитация не найдена');
+    return;
+  }
+
+  Alert.alert(
+    'Восстановить запись', 
+    `Вы уверены, что хотите восстановить ${record.count} повторений медитации ${meditation.label}?`, 
+    [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Восстановить', onPress: () => restoreRecord(meditationId, recordId) },
+    ]
+  );
+};
+
+const restoreRecord = async (meditationId: string, recordId: string) => {
+  try {
+    const newHistory = {
+      ...history,
+      [meditationId]: history[meditationId].map(record => 
+        record.id === recordId 
+          ? { ...record, deleted: false }
+          : record
+      )
+    };
+    setHistory(newHistory);
+    await AsyncStorage.setItem('meditationHistory', JSON.stringify(newHistory));
+    Alert.alert('Успешно', 'Запись восстановлена');
+  } catch (error) {
+    console.error('Ошибка при восстановлении записи:', error);
+    Alert.alert('Ошибка', 'Не удалось восстановить запись');
+  }
+};
 
 
 
@@ -93,10 +143,6 @@ export default function HistoryScreen() {
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${day}/${month}/${year} ${hours}:${minutes}`;
-  };
-
-  const getTotalCount = (meditationId: string) => {
-    return (history[meditationId] || []).reduce((sum, record) => sum + record.count, 0);
   };
 
   return (
@@ -119,7 +165,7 @@ export default function HistoryScreen() {
           <ThemedView style={styles.meditationHeader}>
             <ThemedText type="subtitle">{meditation.label}</ThemedText>
             <ThemedText style={styles.totalCount}>
-              Всего: {getTotalCount(meditation.id)}
+              Всего: {getTotalCount(history, meditation.id)}
             </ThemedText>
           </ThemedView>
           <ScrollView style={styles.historyScrollView}>
@@ -130,21 +176,25 @@ export default function HistoryScreen() {
                   .map((record, index) => (
                     <ThemedView key={index} style={styles.recordContainer}>
                       <ThemedView style={styles.recordInfo}>
-                        <ThemedText style={styles.dateText}>
+                        <ThemedText style={record.deleted ? styles.textBlured : styles.countText}>
                           {formatDate(record.timestamp)}
                         </ThemedText>
-                        <ThemedText style={styles.countText}>
+                        <ThemedText style={record.deleted ? styles.textBlured : styles.countText}>
                           {record.count} повторений
                         </ThemedText>
                       </ThemedView>
                       <Pressable
                         style={styles.deleteButton}
-                        onPress={() => handleClickDeleteRecord(meditation.id, record.id)}>
-                        <IconSymbol
-                          size={20}
-                          name="trash.fill"
-                          color="#FF3B30"
-                        />
+                        onPress={record.deleted ?
+                          () => handleClickRestoreRecord(meditation.id, record.id)
+                          :
+                          () => handleClickDeleteRecord(meditation.id, record.id)
+                        }
+                        >
+                        {record.deleted ?
+                          <MaterialIcons name="restore-from-trash" size={22} color="#999" />
+                          :
+                          <MaterialIcons name="delete-outline" size={22} color="red" />}
                       </Pressable>
                     </ThemedView>
                   ))
@@ -203,7 +253,6 @@ const styles = StyleSheet.create({
   },
   countText: {
     fontSize: 14,
-    fontWeight: 'bold',
   },
   emptyText: {
     fontSize: 14,
@@ -224,4 +273,9 @@ const styles = StyleSheet.create({
     padding: 8,
     marginLeft: 8,
   },
+  textBlured: {
+    fontSize: 14,
+    fontWeight: 'normal',
+    color: '#999',
+  }
 }); 
