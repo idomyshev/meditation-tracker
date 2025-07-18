@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "expo-try",
-    "slug": "expo-try",
+    "name": "meditation-tracker",
+    "slug": "meditation-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -21,7 +21,8 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "port": 3001
     },
     "plugins": [
       "expo-router",
