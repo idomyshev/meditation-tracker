@@ -90,7 +90,7 @@ class ApiClient {
 
   async getProfile() {
     console.log('👤 Getting user profile');
-    return this.request<{ id: string; email: string; name?: string }>('/auth/profile');
+    return this.request<{ userId: string; email: string; username?: string }>('/auth/profile');
   }
 }
 

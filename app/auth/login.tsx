@@ -23,6 +23,7 @@ export default function LoginScreen() {
     try {
       setIsLoading(true);
       await login({ email, password });
+      console.log("auth success!")
       router.replace('/(tabs)');
     } catch (error) {
       Alert.alert('Ошибка входа', 'Неверный email или пароль');

@@ -44,17 +44,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('🚀 Starting login process');
       setState(prev => ({ ...prev, isLoading: true }));
-      
+
       const response = await apiClient.login(credentials);
-      const { accessToken, refreshToken } = response.data;
-      
+      console.log("RESPOOONSE", response)
+      const { access_token: accessToken, refresh_token: refreshToken } = response;
+
       console.log('✅ Login successful, saving tokens');
       await saveTokens(accessToken, refreshToken);
-      
+
       console.log('👤 Getting user profile');
       const profileResponse = await apiClient.getProfile();
       const user = profileResponse.data;
-      
+
       console.log('✅ Auth state updated:', { user: user.email, isAuthenticated: true });
       setState({
         user,
@@ -97,13 +98,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const response = await apiClient.refreshToken(refreshToken);
       const { accessToken, refreshToken: newRefreshToken } = response.data;
-      
+
       console.log('✅ Token refresh successful');
       await saveTokens(accessToken, newRefreshToken);
-      
+
       const profileResponse = await apiClient.getProfile();
       const user = profileResponse.data;
-      
+
       setState({
         user,
         tokens: { accessToken, refreshToken: newRefreshToken },
@@ -128,21 +129,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('🔍 Initializing authentication...');
         const accessToken = await AsyncStorage.getItem('accessToken');
         const refreshToken = await AsyncStorage.getItem('refreshToken');
-        
-        console.log(' Stored tokens:', { 
-          hasAccessToken: !!accessToken, 
-          hasRefreshToken: !!refreshToken 
+
+        console.log(' Stored tokens:', {
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken
         });
-        
+
         if (accessToken && refreshToken) {
           console.log('🔄 Attempting to refresh authentication...');
           await refreshAuth();
         } else {
           console.log('❌ No valid tokens found, user not authenticated');
-          setState(prev => ({ 
-            ...prev, 
+          setState(prev => ({
+            ...prev,
             isAuthenticated: false,  // ← явно устанавливаем false
-            isLoading: false 
+            isLoading: false
           }));
         }
       } catch (error) {
