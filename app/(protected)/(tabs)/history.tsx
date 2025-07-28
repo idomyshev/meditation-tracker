@@ -2,13 +2,14 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { showConfirmAlert, showInfoAlert } from '@/components/UniversalAlert';
 import { getTotalCount } from '@/helpers/helpers';
 import { MeditationRecord } from '@/types/types';
 
@@ -47,85 +48,82 @@ export default function HistoryScreen() {
 
   const handleClickDeleteRecord = (meditationId: string, recordId: string) => {
     const record = history[meditationId].find(record => record.id === recordId);
-    
+
     if (!record) {
-      Alert.alert('Ошибка', 'Запись не найдена');
+      showInfoAlert('Ошибка', 'Запись не найдена');
       return;
     }
 
     const meditation = meditations.find(meditation => meditation.id === meditationId);
     if (!meditation) {
-      Alert.alert('Ошибка', 'Медитация не найдена');
+      showInfoAlert('Ошибка', 'Медитация не найдена');
       return;
     }
 
-    Alert.alert('Удалить запись', `Вы уверены, что хотите удалить ${record.count} повторений медитации ${meditation.label}? `, [
-      { text: 'Отмена', style: 'cancel' },
-      { text: 'Удалить', onPress: () => deleteRecord(meditationId, recordId) },
-    ]);
+    showConfirmAlert(
+      'Удалить запись',
+      `Вы уверены, что хотите удалить ${record.count} повторений медитации ${meditation.label}?`,
+      () => deleteRecord(meditationId, recordId)
+    );
   };
 
-const deleteRecord = async (meditationId: string, recordId: string) => {
-  try {
-    const newHistory = {
-      ...history,
-      [meditationId]: history[meditationId].map(record => 
-        record.id === recordId 
-          ? { ...record, deleted: true }
-          : record
-      )
-    };
-    setHistory(newHistory);
-    await AsyncStorage.setItem('meditationHistory', JSON.stringify(newHistory));
-    Alert.alert('Успешно', 'Запись помечена, как удаленная');
-  } catch (error) {
-    console.error('Ошибка при удалении записи:', error);
-    Alert.alert('Ошибка', 'Не удалось удалить запись');
-  }
-};
-  
+  const deleteRecord = async (meditationId: string, recordId: string) => {
+    try {
+      const newHistory = {
+        ...history,
+        [meditationId]: history[meditationId].map(record =>
+          record.id === recordId
+            ? { ...record, deleted: true }
+            : record
+        )
+      };
+      setHistory(newHistory);
+      await AsyncStorage.setItem('meditationHistory', JSON.stringify(newHistory));
+    } catch (error) {
+      console.error('Ошибка при удалении записи:', error);
+      showInfoAlert('Ошибка', 'Не удалось удалить запись');
+    }
+  };
+
   const handleClickRestoreRecord = (meditationId: string, recordId: string) => {
-  const record = history[meditationId].find(record => record.id === recordId);
-  
-  if (!record) {
-    Alert.alert('Ошибка', 'Запись не найдена');
-    return;
-  }
+    const record = history[meditationId].find(record => record.id === recordId);
 
-  const meditation = meditations.find(meditation => meditation.id === meditationId);
-  if (!meditation) {
-    Alert.alert('Ошибка', 'Медитация не найдена');
-    return;
-  }
+    if (!record) {
+      showInfoAlert('Ошибка', 'Запись не найдена');
+      return;
+    }
 
-  Alert.alert(
-    'Восстановить запись', 
-    `Вы уверены, что хотите восстановить ${record.count} повторений медитации ${meditation.label}?`, 
-    [
-      { text: 'Отмена', style: 'cancel' },
-      { text: 'Восстановить', onPress: () => restoreRecord(meditationId, recordId) },
-    ]
-  );
-};
+    const meditation = meditations.find(meditation => meditation.id === meditationId);
+    if (!meditation) {
+      showInfoAlert('Ошибка', 'Медитация не найдена');
+      return;
+    }
 
-const restoreRecord = async (meditationId: string, recordId: string) => {
-  try {
-    const newHistory = {
-      ...history,
-      [meditationId]: history[meditationId].map(record => 
-        record.id === recordId 
-          ? { ...record, deleted: false }
-          : record
-      )
-    };
-    setHistory(newHistory);
-    await AsyncStorage.setItem('meditationHistory', JSON.stringify(newHistory));
-    Alert.alert('Успешно', 'Запись восстановлена');
-  } catch (error) {
-    console.error('Ошибка при восстановлении записи:', error);
-    Alert.alert('Ошибка', 'Не удалось восстановить запись');
-  }
-};
+    showConfirmAlert(
+      'Восстановить запись',
+      `Вы уверены, что хотите восстановить ${record.count} повторений медитации ${meditation.label}?`,
+      () => restoreRecord(meditationId, recordId)
+    );
+  };
+
+  const restoreRecord = async (meditationId: string, recordId: string) => {
+    try {
+      const newHistory = {
+        ...history,
+        [meditationId]: history[meditationId].map(record =>
+          record.id === recordId
+            ? { ...record, deleted: false }
+            : record
+        )
+      };
+      setHistory(newHistory);
+      await AsyncStorage.setItem('meditationHistory', JSON.stringify(newHistory));
+      showInfoAlert('Успешно', 'Запись восстановлена');
+    } catch (error) {
+      console.error('Ошибка при восстановлении записи:', error);
+      showInfoAlert('Ошибка', 'Не удалось восстановить запись');
+    }
+  };
 
 
 
@@ -190,7 +188,7 @@ const restoreRecord = async (meditationId: string, recordId: string) => {
                           :
                           () => handleClickDeleteRecord(meditation.id, record.id)
                         }
-                        >
+                      >
                         {record.deleted ?
                           <MaterialIcons name="restore-from-trash" size={22} color="#999" />
                           :

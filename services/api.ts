@@ -67,7 +67,7 @@ class ApiClient {
 
   async login(credentials: { email: string; password: string }) {
     console.log('🔑 Login attempt:', { email: credentials.email });
-    return this.request<{ accessToken: string; refreshToken: string }>('/auth/login', {
+    return this.request<{ access_token: string; refresh_token: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
@@ -75,9 +75,9 @@ class ApiClient {
 
   async refreshToken(refreshToken: string) {
     console.log('🔄 Refreshing token');
-    return this.request<{ accessToken: string; refreshToken: string }>('/auth/refresh', {
+    return this.request<{ access_token: string; refresh_token: string }>('/auth/refresh', {
       method: 'POST',
-      body: JSON.stringify({ refreshToken }),
+      body: JSON.stringify({ refresh_token: refreshToken }),
     });
   }
 

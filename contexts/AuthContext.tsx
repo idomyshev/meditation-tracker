@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const response = await apiClient.refreshToken(refreshToken);
-      const { accessToken, refreshToken: newRefreshToken } = response;
+      const { access_token: accessToken, refresh_token: newRefreshToken } = response;
 
       console.log('✅ Token refresh successful');
       await saveTokens(accessToken, newRefreshToken);

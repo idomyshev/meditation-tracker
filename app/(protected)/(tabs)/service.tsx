@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { showConfirmAlert, showInfoAlert } from '@/components/UniversalAlert';
 import { useAuth } from '@/contexts/AuthContext';
 import { clearAllData, logStoredData } from '@/utils/debug';
 
@@ -14,91 +15,64 @@ export default function ServiceScreen() {
   const { logout, user } = useAuth();
 
   const clearStorage = async () => {
-    Alert.alert(
+    showConfirmAlert(
       'Очистка данных',
       'Вы уверены, что хотите очистить все данные приложения? Это действие нельзя отменить.',
-      [
-        {
-          text: 'Отмена',
-          style: 'cancel'
-        },
-        {
-          text: 'Очистить',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsClearing(true);
-              
-              // Очищаем конкретный ключ
-              await AsyncStorage.removeItem('meditationHistory');
-              
-              // Для надежности также используем clear()
-              await AsyncStorage.clear();
-              
-              // Проверяем, что данные действительно удалены
-              const remainingData = await AsyncStorage.getItem('meditationHistory');
-              if (remainingData) {
-                throw new Error('Данные не были полностью очищены');
-              }
-              
-              Alert.alert('Успех', 'Все данные успешно очищены');
-            } catch (error) {
-              console.error('Ошибка при очистке данных:', error);
-              Alert.alert('Ошибка', 'Не удалось очистить данные. Пожалуйста, попробуйте еще раз.');
-            } finally {
-              setIsClearing(false);
-            }
+      async () => {
+        try {
+          setIsClearing(true);
+
+          // Очищаем конкретный ключ
+          await AsyncStorage.removeItem('meditationHistory');
+
+          // Для надежности также используем clear()
+          await AsyncStorage.clear();
+
+          // Проверяем, что данные действительно удалены
+          const remainingData = await AsyncStorage.getItem('meditationHistory');
+          if (remainingData) {
+            throw new Error('Данные не были полностью очищены');
           }
+
+          showInfoAlert('Успех', 'Все данные успешно очищены');
+        } catch (error) {
+          console.error('Ошибка при очистке данных:', error);
+          showInfoAlert('Ошибка', 'Не удалось очистить данные. Пожалуйста, попробуйте еще раз.');
+        } finally {
+          setIsClearing(false);
         }
-      ]
+      }
     );
   };
 
   const handleLogout = async () => {
-    Alert.alert(
+    showConfirmAlert(
       'Выход',
       'Вы уверены, что хотите выйти из системы?',
-      [
-        {
-          text: 'Отмена',
-          style: 'cancel'
-        },
-        {
-          text: 'Выйти',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-            } catch (error) {
-              console.error('Ошибка при выходе:', error);
-            }
-          }
+      async () => {
+        try {
+          await logout();
+        } catch (error) {
+          console.error('Ошибка при выходе:', error);
         }
-      ]
+      }
     );
   };
 
   const handleDebugClear = async () => {
-    Alert.alert(
+    showConfirmAlert(
       'Отладка',
       'Очистить все данные приложения?',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        {
-          text: 'Очистить',
-          style: 'destructive',
-          onPress: async () => {
-            await clearAllData();
-            Alert.alert('Успех', 'Все данные очищены');
-          }
-        }
-      ]
+      async () => {
+        await clearAllData();
+        showInfoAlert('Успех', 'Все данные очищены');
+      }
     );
   };
 
   const handleDebugLog = async () => {
     const data = await logStoredData();
-    Alert.alert('Отладка', `Найдено ${Object.keys(data).length} записей в хранилище`);
+    showInfoAlert('Отладка', `Найдено ${Object.keys(data).length} записей в хранилище`);
   };
 
   return (
@@ -122,7 +96,7 @@ export default function ServiceScreen() {
             <ThemedText style={styles.userEmail}>{user.email}</ThemedText>
           </ThemedView>
         )}
-        
+
         <Pressable
           style={[styles.button, isClearing && styles.buttonDisabled]}
           onPress={clearStorage}

@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput } from 'react-native';
+import { Pressable, StyleSheet, TextInput } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { showInfoAlert } from '@/components/UniversalAlert';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginScreen() {
@@ -16,7 +17,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Ошибка', 'Пожалуйста, заполните все поля');
+      showInfoAlert('Ошибка', 'Пожалуйста, заполните все поля');
       return;
     }
 
@@ -26,7 +27,7 @@ export default function LoginScreen() {
       console.log("auth success!")
       router.replace('/(tabs)');
     } catch (error) {
-      Alert.alert('Ошибка входа', 'Неверный email или пароль');
+      showInfoAlert('Ошибка входа', 'Неверный email или пароль');
     } finally {
       setIsLoading(false);
     }
