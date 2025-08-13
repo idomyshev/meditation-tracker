@@ -7,15 +7,17 @@ import { Pressable, StyleSheet } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { showInfoAlert } from '@/components/UniversalAlert';
+import { useAuth } from '@/contexts/AuthContext';
 import { getTotalCount } from '@/helpers/helpers';
-import { generateUUID } from '@/helpers/uuid';
+import { syncService } from '@/services/syncService';
 import { meditations } from '@/settings/settings';
-import { MeditationHistory, MeditationRecord } from '@/types/types';
-
+import { MeditationHistory } from '@/types/types';
 
 
 export default function HomeScreen() {
   const [history, setHistory] = useState<MeditationHistory>({});
+  const { user } = useAuth();
 
   const loadHistory = async () => {
     try {
@@ -35,23 +37,27 @@ export default function HomeScreen() {
   );
 
   const addMeditationRecord = async (meditationId: string, count: number) => {
-    try {
-      const newRecord: MeditationRecord = {
-        id: generateUUID(),
-        count,
-        timestamp: Date.now(),
-      };
+    console.log('🔍 Debug user state:', { user, userId: user?.id });
 
+    if (!user?.id) {
+      showInfoAlert('Ошибка', 'Пользователь не авторизован');
+      return;
+    }
+
+    try {
+      // Используем сервис синхронизации
+      const newRecord = await syncService.addMeditationRecord(meditationId, count, user.id);
+
+      // Обновляем локальное состояние
       const newHistory = {
         ...history,
         [meditationId]: [...(history[meditationId] || []), newRecord],
       };
-
-      console.log('Сохраняемая история:', newHistory);
       setHistory(newHistory);
-      await AsyncStorage.setItem('meditationHistory', JSON.stringify(newHistory));
+
     } catch (error) {
       console.error('Ошибка при сохранении данных:', error);
+      showInfoAlert('Ошибка', 'Не удалось сохранить запись. Попробуйте еще раз.');
     }
   };
 

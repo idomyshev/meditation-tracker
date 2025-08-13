@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const profileResponse = await apiClient.getProfile();
       const user = profileResponse;
 
-      console.log('✅ Auth state updated:', { user: user.email, isAuthenticated: true });
+      console.log('✅ Auth state updated:', { user: user.email, userId: user.id, isAuthenticated: true });
       setState({
         user,
         tokens: { accessToken, refreshToken },
@@ -97,13 +97,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const response = await apiClient.refreshToken(refreshToken);
-      const { access_token: accessToken, refresh_token: newRefreshToken } = response;
+      const { access_token: accessToken, refresh_token: newRefreshToken } = response.data;
 
       console.log('✅ Token refresh successful');
       await saveTokens(accessToken, newRefreshToken);
 
       const profileResponse = await apiClient.getProfile();
-      const user = profileResponse;
+      const user = profileResponse.data;
 
       setState({
         user,

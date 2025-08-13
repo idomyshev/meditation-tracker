@@ -8,6 +8,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { showConfirmAlert, showInfoAlert } from '@/components/UniversalAlert';
 import { useAuth } from '@/contexts/AuthContext';
+import { syncService } from '@/services/syncService';
 import { clearAllData, logStoredData } from '@/utils/debug';
 
 export default function ServiceScreen() {
@@ -75,6 +76,27 @@ export default function ServiceScreen() {
     showInfoAlert('Отладка', `Найдено ${Object.keys(data).length} записей в хранилище`);
   };
 
+  const handleForceSync = async () => {
+    if (!user?.userId) {
+      showInfoAlert('Ошибка', 'Пользователь не авторизован');
+      return;
+    }
+
+    try {
+      showInfoAlert('Синхронизация', 'Начинаем синхронизацию...');
+      await syncService.syncAllPendingRecords(user.userId);
+
+      const status = await syncService.getSyncStatus();
+      showInfoAlert(
+        'Синхронизация завершена',
+        `Всего записей: ${status.totalRecords}\nСинхронизировано: ${status.syncedRecords}\nОжидают: ${status.pendingRecords}`
+      );
+    } catch (error) {
+      console.error('Sync error:', error);
+      showInfoAlert('Ошибка', 'Не удалось выполнить синхронизацию');
+    }
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
@@ -122,6 +144,18 @@ export default function ServiceScreen() {
             style={styles.buttonIcon}
           />
           <ThemedText style={styles.buttonText}>Выйти из системы</ThemedText>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, styles.syncButton]}
+          onPress={handleForceSync}>
+          <IconSymbol
+            size={24}
+            name="arrow.clockwise"
+            color="#007AFF"
+            style={styles.buttonIcon}
+          />
+          <ThemedText style={styles.buttonText}>Синхронизировать</ThemedText>
         </Pressable>
 
         <Pressable
@@ -177,8 +211,12 @@ const styles = StyleSheet.create({
     borderColor: '#FF3B30',
   },
   logoutButton: {
-    backgroundColor: 'rgba(255, 59, 48, 0.2)',
-    borderColor: '#FF3B30',
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    borderColor: '#000',
+  },
+  syncButton: {
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    borderColor: '#007AFF',
   },
   buttonDisabled: {
     opacity: 0.5,

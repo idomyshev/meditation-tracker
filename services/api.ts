@@ -1,3 +1,4 @@
+import { User } from '@/types/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = 'http://localhost:4001';
@@ -88,9 +89,17 @@ class ApiClient {
     });
   }
 
-  async getProfile() {
+  async getProfile(): Promise<User> {
     console.log('👤 Getting user profile');
-    return this.request<{ userId: string; email: string; username?: string }>('/auth/profile');
+    return await this.request<User>('/auth/profile');
+  }
+
+  async createMeditationRecord(data: { userId: string; meditationId: string; value: number }) {
+    console.log('📝 Creating meditation record:', data);
+    return this.request<{ id: string }>('/records', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 }
 

@@ -8,6 +8,8 @@ export interface MeditationRecord {
   count: number;
   timestamp: number;
   deleted?: boolean;
+  synced?: boolean; // Флаг синхронизации
+  serverId?: string; // ID на сервере
 }
 
 export interface MeditationHistory {
