@@ -8,12 +8,14 @@ import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { showConfirmAlert, showInfoAlert } from '@/components/UniversalAlert';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMeditations } from '@/hooks/useMeditations';
 import { syncService } from '@/services/syncService';
 import { clearAllData, logStoredData } from '@/utils/debug';
 
 export default function ServiceScreen() {
   const [isClearing, setIsClearing] = useState(false);
   const { logout, user } = useAuth();
+  const { refreshMeditations } = useMeditations();
 
   const clearStorage = async () => {
     showConfirmAlert(
@@ -77,14 +79,14 @@ export default function ServiceScreen() {
   };
 
   const handleForceSync = async () => {
-    if (!user?.userId) {
+    if (!user?.id) {
       showInfoAlert('Ошибка', 'Пользователь не авторизован');
       return;
     }
 
     try {
       showInfoAlert('Синхронизация', 'Начинаем синхронизацию...');
-      await syncService.syncAllPendingRecords(user.userId);
+      await syncService.syncAllPendingRecords(user.id);
 
       const status = await syncService.getSyncStatus();
       showInfoAlert(
@@ -94,6 +96,17 @@ export default function ServiceScreen() {
     } catch (error) {
       console.error('Sync error:', error);
       showInfoAlert('Ошибка', 'Не удалось выполнить синхронизацию');
+    }
+  };
+
+  const handleRefreshMeditations = async () => {
+    try {
+      showInfoAlert('Обновление', 'Начинаем обновление медитаций...');
+      refreshMeditations();
+      showInfoAlert('Обновление завершено', 'Медитации успешно обновлены.');
+    } catch (error) {
+      console.error('Refresh error:', error);
+      showInfoAlert('Ошибка', 'Не удалось обновить медитации.');
     }
   };
 
@@ -120,6 +133,30 @@ export default function ServiceScreen() {
         )}
 
         <Pressable
+          style={[styles.button, styles.syncButton]}
+          onPress={handleForceSync}>
+          <IconSymbol
+            size={24}
+            name="arrow.clockwise"
+            color="#007AFF"
+            style={styles.buttonIcon}
+          />
+          <ThemedText style={styles.buttonText}>Синхронизировать</ThemedText>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, styles.refreshButton]}
+          onPress={handleRefreshMeditations}>
+          <IconSymbol
+            size={24}
+            name="arrow.clockwise.circle"
+            color="#34C759"
+            style={styles.buttonIcon}
+          />
+          <ThemedText style={styles.buttonText}>Обновить медитации</ThemedText>
+        </Pressable>
+
+        <Pressable
           style={[styles.button, isClearing && styles.buttonDisabled]}
           onPress={clearStorage}
           disabled={isClearing}>
@@ -144,18 +181,6 @@ export default function ServiceScreen() {
             style={styles.buttonIcon}
           />
           <ThemedText style={styles.buttonText}>Выйти из системы</ThemedText>
-        </Pressable>
-
-        <Pressable
-          style={[styles.button, styles.syncButton]}
-          onPress={handleForceSync}>
-          <IconSymbol
-            size={24}
-            name="arrow.clockwise"
-            color="#007AFF"
-            style={styles.buttonIcon}
-          />
-          <ThemedText style={styles.buttonText}>Синхронизировать</ThemedText>
         </Pressable>
 
         <Pressable
@@ -217,6 +242,10 @@ const styles = StyleSheet.create({
   syncButton: {
     backgroundColor: 'rgba(0, 122, 255, 0.1)',
     borderColor: '#007AFF',
+  },
+  refreshButton: {
+    backgroundColor: 'rgba(52, 199, 89, 0.1)',
+    borderColor: '#34C759',
   },
   buttonDisabled: {
     opacity: 0.5,

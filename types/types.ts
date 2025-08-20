@@ -1,6 +1,13 @@
+import { User } from "./auth";
+
 export interface Meditation {
-  label: string;
   id: string;
+  name: string;
+  records: MeditationRecord[];
+  userId: string;
+  user: User;
+  createdAt: string;
+  updatedAt: string
 }
 
 export interface MeditationRecord {

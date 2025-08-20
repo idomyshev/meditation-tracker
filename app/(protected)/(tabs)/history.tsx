@@ -11,27 +11,16 @@ import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { showConfirmAlert, showInfoAlert } from '@/components/UniversalAlert';
 import { getTotalCount } from '@/helpers/helpers';
+import { useMeditations } from '@/hooks/useMeditations';
 import { MeditationRecord } from '@/types/types';
-
-
-interface Meditation {
-  label: string;
-  id: string;
-}
 
 interface MeditationHistory {
   [key: string]: MeditationRecord[];
 }
 
-const meditations: Meditation[] = [
-  { label: 'Простирания', id: 'prostrations' },
-  { label: 'Алмазный Ум', id: 'diamond-mind' },
-  { label: 'Мандала', id: 'mandala' },
-  { label: 'Гуру Йога', id: 'guru-yoga' },
-];
-
 export default function HistoryScreen() {
   const [history, setHistory] = useState<MeditationHistory>({});
+  const { meditations, isLoading: meditationsLoading, error: meditationsError, refreshMeditations } = useMeditations();
   console.log('История1:', history);
 
   const loadHistory = async () => {
@@ -62,7 +51,7 @@ export default function HistoryScreen() {
 
     showConfirmAlert(
       'Удалить запись',
-      `Вы уверены, что хотите удалить ${record.count} повторений медитации ${meditation.label}?`,
+      `Вы уверены, что хотите удалить ${record.count} повторений медитации ${meditation.name}?`,
       () => deleteRecord(meditationId, recordId)
     );
   };
@@ -101,7 +90,7 @@ export default function HistoryScreen() {
 
     showConfirmAlert(
       'Восстановить запись',
-      `Вы уверены, что хотите восстановить ${record.count} повторений медитации ${meditation.label}?`,
+      `Вы уверены, что хотите восстановить ${record.count} повторений медитации ${meditation.name}?`,
       () => restoreRecord(meditationId, recordId)
     );
   };
@@ -161,7 +150,7 @@ export default function HistoryScreen() {
       {meditations.map((meditation) => (
         <ThemedView key={meditation.id} style={styles.meditationContainer}>
           <ThemedView style={styles.meditationHeader}>
-            <ThemedText type="subtitle">{meditation.label}</ThemedText>
+            <ThemedText type="subtitle">{meditation.name}</ThemedText>
             <ThemedText style={styles.totalCount}>
               Всего: {getTotalCount(history, meditation.id)}
             </ThemedText>

@@ -10,14 +10,14 @@ import { ThemedView } from '@/components/ThemedView';
 import { showInfoAlert } from '@/components/UniversalAlert';
 import { useAuth } from '@/contexts/AuthContext';
 import { getTotalCount } from '@/helpers/helpers';
+import { useMeditations } from '@/hooks/useMeditations';
 import { syncService } from '@/services/syncService';
-import { meditations } from '@/settings/settings';
 import { MeditationHistory } from '@/types/types';
-
 
 export default function HomeScreen() {
   const [history, setHistory] = useState<MeditationHistory>({});
   const { user } = useAuth();
+  const { meditations, isLoading: meditationsLoading, error: meditationsError, refreshMeditations } = useMeditations();
 
   const loadHistory = async () => {
     try {
@@ -74,29 +74,42 @@ export default function HomeScreen() {
         <ThemedText type="title">Счетчик медитаций!</ThemedText>
       </ThemedView>
 
-      {meditations.map((meditation) => (
-        <ThemedView key={meditation.id} style={styles.meditationContainer}>
-          <ThemedText type="subtitle">{meditation.label}</ThemedText>
-          <ThemedText>Всего выполнено: {getTotalCount(history, meditation.id)}</ThemedText>
-          <ThemedView style={styles.buttonContainer}>
-            <Pressable
-              style={styles.button}
-              onPress={() => addMeditationRecord(meditation.id, 27)}>
-              <ThemedText>+27</ThemedText>
-            </Pressable>
-            <Pressable
-              style={styles.button}
-              onPress={() => addMeditationRecord(meditation.id, 54)}>
-              <ThemedText>+54</ThemedText>
-            </Pressable>
-            <Pressable
-              style={styles.button}
-              onPress={() => addMeditationRecord(meditation.id, 108)}>
-              <ThemedText>+108</ThemedText>
-            </Pressable>
-          </ThemedView>
+      {meditationsLoading ? (
+        <ThemedView style={styles.loadingContainer}>
+          <ThemedText>Загрузка медитаций...</ThemedText>
         </ThemedView>
-      ))}
+      ) : meditationsError ? (
+        <ThemedView style={styles.errorContainer}>
+          <ThemedText style={styles.errorText}>{meditationsError}</ThemedText>
+          <Pressable style={styles.retryButton} onPress={refreshMeditations}>
+            <ThemedText style={styles.retryButtonText}>Повторить</ThemedText>
+          </Pressable>
+        </ThemedView>
+      ) : (
+        meditations.map((meditation) => (
+          <ThemedView key={meditation.id} style={styles.meditationContainer}>
+            <ThemedText type="subtitle">{meditation.name}</ThemedText>
+            <ThemedText>Всего выполнено: {getTotalCount(history, meditation.id)}</ThemedText>
+            <ThemedView style={styles.buttonContainer}>
+              <Pressable
+                style={styles.button}
+                onPress={() => addMeditationRecord(meditation.id, 27)}>
+                <ThemedText>+27</ThemedText>
+              </Pressable>
+              <Pressable
+                style={styles.button}
+                onPress={() => addMeditationRecord(meditation.id, 54)}>
+                <ThemedText>+54</ThemedText>
+              </Pressable>
+              <Pressable
+                style={styles.button}
+                onPress={() => addMeditationRecord(meditation.id, 108)}>
+                <ThemedText>+108</ThemedText>
+              </Pressable>
+            </ThemedView>
+          </ThemedView>
+        ))
+      )}
     </ParallaxScrollView>
   );
 }
@@ -133,5 +146,31 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#A1CEDC',
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
   },
 });
