@@ -1,3 +1,4 @@
+import { Meditation } from '@/types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = 'http://localhost:4001';
@@ -95,7 +96,7 @@ class ApiClient {
 
   async getMeditations() {
     console.log('🧘 Getting meditations from API');
-    return this.request<Array<{ id: string; name: string; userId: string; createdAt: string; updatedAt: string }>>('/meditations');
+    return this.request<Meditation[]>('/meditations');
   }
 
   async createMeditationRecord(data: { userId: string; meditationId: string; value: number }) {
