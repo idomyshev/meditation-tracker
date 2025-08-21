@@ -99,7 +99,7 @@ class ApiClient {
     return this.request<Meditation[]>('/meditations');
   }
 
-  async createMeditationRecord(data: { userId: string; meditationId: string; value: number }) {
+  async createMeditationRecord(data: { meditationId: string; value: number }) {
     console.log('📝 Creating meditation record:', data);
     return this.request<{ id: string }>('/records', {
       method: 'POST',

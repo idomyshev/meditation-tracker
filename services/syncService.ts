@@ -3,7 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from './api';
 
 interface CreateRecordRequest {
-    userId: string;
     meditationId: string;
     value: number;
 }
@@ -45,7 +44,6 @@ class SyncService {
         try {
             // Создаем запрос для API
             const request: CreateRecordRequest = {
-                userId,
                 meditationId,
                 value: record.count, // API ожидает value
             };
