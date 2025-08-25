@@ -166,9 +166,19 @@ export default function HistoryScreen() {
                         <ThemedText style={record.deleted ? styles.textBlured : styles.countText}>
                           {formatDate(record.timestamp)}
                         </ThemedText>
-                        <ThemedText style={record.deleted ? styles.textBlured : styles.countText}>
-                          {record.count} повторений
-                        </ThemedText>
+                        <ThemedView style={styles.countAndSyncContainer}>
+                          <ThemedText style={record.deleted ? styles.textBlured : styles.countText}>
+                            {record.count} повторений
+                          </ThemedText>
+                          {/* Индикатор синхронизации */}
+                          <ThemedView style={styles.syncIndicator}>
+                            {record.synced ? (
+                              <MaterialIcons name="cloud-done" size={16} color="#34C759" />
+                            ) : (
+                              <MaterialIcons name="cloud-upload" size={16} color="#FF9500" />
+                            )}
+                          </ThemedView>
+                        </ThemedView>
                       </ThemedView>
                       <Pressable
                         style={styles.deleteButton}
@@ -235,6 +245,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  countAndSyncContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  syncIndicator: {
+    padding: 2,
+  },
   dateText: {
     fontSize: 14,
   },
@@ -264,5 +282,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'normal',
     color: '#999',
-  }
+  },
 }); 
